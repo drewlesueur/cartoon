@@ -1,0 +1,124 @@
+<!doctype html>
+<html>
+<head>
+
+<script src = "jquery.js"></script>
+<script src = "json.js"></script>
+<script>
+
+    var arr = []
+    var startTime = 0;
+    
+    function keydowner(e) {
+        
+        if (e.which == 32) {
+            pusher = ['u', (new Date()).getTime() - startTime]
+            $('#huy').css('top', '-40px');
+        } else if (e.which == 16) {
+            pusher = ['b', (new Date()).getTime() - startTime]
+           $('#huy').attr('src', 'big.png');
+        } else if (e.which == 27) {
+            $('#save').val($.toJSON(arr))
+        } else {
+            pusher = ['o', (new Date()).getTime() - startTime]
+            $('#huy').attr('src', '1.png');
+        }
+        arr.push(pusher)
+    }
+    
+    function keyuper(e) {
+        
+         if (e.which == 32) {
+            pusher = ['d', (new Date()).getTime() - startTime]
+            $('#huy').css('top', '0px');
+        } else {
+            pusher = ['c', (new Date()).getTime() - startTime]
+            $('#huy').attr('src', '2.png');
+        }
+        arr.push(pusher)
+    }
+    
+    
+    function start() {
+        startTime = (new Date).getTime();
+        $(document).keydown(keydowner)
+        $(document).keyup(keyuper)
+    }
+    
+    
+  function play(){
+    var arr = $('#save').val();
+    var saved = $.evalJSON(arr);
+    var index = 0;
+    
+    var startTime = (new Date()).getTime();
+    
+    var timer = setInterval(check, 1)
+    var item = [];
+    var action = ''
+    function check() {
+        if (index >= saved.length) {
+                clearInterval(timer);
+                return;
+            }
+        item = saved[index]
+        action = item[0];
+        timeDiff = (((new Date()).getTime() - startTime) - item[1])
+        
+        if ( timeDiff < 100  && timeDiff > -100 ) {
+            
+            
+            if (action == 'u') {
+                $('#huy').css('top', '-40px');
+                
+            } else if (action == 'd') {
+                 $('#huy').css('top', '0px');
+                 
+            } else if (action == 'o') {
+                $('#huy').attr('src', '1.png');
+            } else if (action == 'b') {
+                $('#huy').attr('src', 'big.png');
+            } else if (action == 'c') {
+                $('#huy').attr('src', '2.png');
+            }
+            
+            index++;
+            check(); //call it again untill you are too far apart? i guess it works
+        }
+        
+    }
+    
+    
+  }
+    
+    
+$(document).ready(function(){
+  
+
+   
+
+})
+ 
+
+
+
+</script>
+
+</head>
+<body>
+<div align  = "center">
+<br><br><br><br><br><br><br><br>
+<img id = "huy" style = "position: relative;" src = '2.png' />
+
+<br>
+<textarea id = 'save'></textarea>
+<br>
+<input type = 'button' onclick = "start(); $(this).blur()" value = "record">
+<input type = 'button' onclick = "$('#save').val($.toJSON(arr))" value = "stop">
+<input type = 'button' onclick = "play()" value = "play">
+<input type = 'button' onclick = "$('#save').val('')" value = "clear">
+
+</div>
+
+</body>
+</html>
