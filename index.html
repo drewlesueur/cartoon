@@ -46,8 +46,8 @@
 <script src="http://inc.the.tl/coffeescript.js"></script>
 <script src="http://inc.the.tl/neckbrace/index.js"></script>
 <script type="text/coffeescript">
-
-Move = _p.class
+  #problem. instantiating should NOT append to the dom or the object
+Move = _e.class
   initialize: (o) -> #must pass in the track it belogns to
     console.log "go here!!"
     el = _m(o).el = $ document.createElement "div"
@@ -66,11 +66,11 @@ Move = _p.class
 
 
 
-Track = _p.class
+Track = _e.class
   initialize: (o) ->
     el = _m(o).el = $ document.createElement "div"
     el.addClass "track"
-    moves = _p.new Arr, []
+    if not o.moves then o.moves = _e.new Arr, []
     _p.append o    
   append: (o) ->
     mo = _m(o)
@@ -87,7 +87,7 @@ Track = _p.class
 _.mixin
   stringFromKeyCode: (keyCode) -> String.fromCharCode(keyCode).toLowerCase() 
 
-Arr = _p.__Arr
+Arr = []
 
 keys =
   space: 32
@@ -95,7 +95,7 @@ keys =
   delete: 46
   backspace: 8
   
-TrackManager = _p.class
+TrackManager = _e.class
   intervalAmt: 1000
   set: (o, vals) ->
     _.extend o, vals
@@ -109,7 +109,7 @@ TrackManager = _p.class
     el.addClass "tracks"
     playBar.addClass "playBar"
     needle.addClass "needle"
-    o.tracks = _p.new Arr, []
+    if not o.tracks then o.tracks = _e.new Arr, []
     o.$audio = $ o.audio
     o.audio = o.$audio[0] 
     _p.append o
@@ -164,25 +164,28 @@ TrackManager = _p.class
         o.selected.end = o.audio.currentTime
         console.log "up at #{o.selected.end}"
         o.lastKeyCode = false
-        move = _p.new Move, 
+        move = _e.new Move, 
           start: o.selected.start
           end: o.selected.end
           track: o.selected 
     $('#zoom').bind "change", (e) ->
-      console.log $(this).val()
+      o.zoom = $(this).val()
+      _p.render o
+
   render: (o) ->
-    #todo: add this method
+    $('.tracks').empty()
+    
   removeTrack: (o, track) ->
     _p.remove o.tracks, track
     _p.render o
 
 $(document).ready () ->
-  trackManager = window.trackManager = _p.new TrackManager, audio: $('#song')
+  trackManager = window.trackManager = _e.new TrackManager, audio: $('#song')
   #Track = _m(trackManager).Track
-  #track1 = _p.new Track, name: "a"
-  track1 = _p.new Track, name: "a", trackManager: trackManager
-  track2 = _p.new Track, name: "b", trackManager: trackManager
-  _p.new Track, name: "c", trackManager: trackManager
+  #track1 = _e.new Track, name: "a"
+  track1 = _e.new Track, name: "a", trackManager: trackManager
+  track2 = _e.new Track, name: "b", trackManager: trackManager
+  _e.new Track, name: "c", trackManager: trackManager
   _p(trackManager).set "selected": trackManager.tracks[0]
 
 </script>
