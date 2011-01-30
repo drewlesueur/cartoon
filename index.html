@@ -20,6 +20,7 @@
 <script src="http://inc.the.tl/coffeescript.js"></script>
 <script src="http://inc.the.tl/neckbrace/index.js"></script>
 <script type="text/coffeescript">
+  
 TrackMaker = (trackManager) ->
   Track = _p.class
     initialize: (o) ->
@@ -27,42 +28,59 @@ TrackMaker = (trackManager) ->
       el.addClass "track"
       _p.append o    
     append: (o) ->
-      _.add
+      _p.add trackManager.tracks, o
       _m(trackManager).el.append _m(o).el
-
-#simple array with adding and removing
-Arr = window.Arr = _p.class
-  initialize: (o) ->
-    _m(o)._byCid = {}
-  add: (o, item) ->
-    o.push item
-    _m(o)._byCid[item.__cid] = item
-  remove: (o, item) ->
-    if not (item.__cid of o._byCid)
-      return false
-    for member, key in o
-      if member.__cid == item.__cid
-        o.splice key, 1
+    
+_.mixin
+  stringFromKeyCode: (keyCode) -> String.fromCharCode(keyCode).toLowerCase() 
 
 TrackManager = _p.class
+  intervalAmt: 1000
   initialize: (o) ->
     el = _m(o).el = $ document.createElement "div"
+    playBar = _m(o).playBar = $ document.createElement "div"
     el.addClass "tracks"
-    o.tracks = []
+    playBar.addClass "playBar"
+    o.tracks = _p.new Arr, []
+    o.$audio = $ o.audio
+    o.audio = o.$audio[0] 
     _p.append o
     _m(o).Track = TrackMaker o
-    console.log o.audio
+    console.log o.$audio
+    o.playing = false
+    o.$audio.bind "canplaythrough", (e) ->
+      console.log "can play through"
+    o.$audio.bind "play", (e) ->
+      o.playing = true
+    o.$audio.bind "pause", (e) ->
+      o.playing = false
+    playHeadFunc = () ->
+      _p.setPlayHead o
+    o.interval = setInterval playHeadFunc, TrackManager.intervalAmt
+  setPlayHead: (o) ->
+    duration = o.audio.duration
+    currentTime = o.audio.currentTime 
+    console.log currentTime
   append: (o) ->
-    $(document.body).append _m(o).el
+    $(document.body).append(_m(o).playBar).append _m(o).el
+    $(document).keydown (e) ->
+      if o.playing == false
+        console.log "not playing" 
+        return
+      console.log "playing is true"
+      e.preventDefault()
+      console.log _.stringFromKeyCode e.keyCode     
   render: (o) ->
     #todo: add this method
   removeTrack: (o, track) ->
-  addTrack: (o, track) ->
+    _p.remove o.tracks, track
+    _p.render o
+  
 
 $(document).ready () ->
-  #trackManager = window.trackManager = _p.new TrackManager, audio: $('#song')
-  #track1 = _p.new _m(trackManager).Track
-   
+  trackManager = window.trackManager = _p.new TrackManager, audio: $('#song')
+  track1 = _p.new _m(trackManager).Track
+  
 
 
 
