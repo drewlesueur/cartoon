@@ -16,6 +16,7 @@
     background-color: #7777dd;
     height: 20px;
     margin-bottom: 15px;
+    position: relative;
   }
   .needle {
     height: 20px;
@@ -50,6 +51,8 @@ TrackMaker = (trackManager) ->
 _.mixin
   stringFromKeyCode: (keyCode) -> String.fromCharCode(keyCode).toLowerCase() 
 
+Arr = _p.__Arr
+
 TrackManager = _p.class
   intervalAmt: 1000
   initialize: (o) ->
@@ -75,19 +78,27 @@ TrackManager = _p.class
     playHeadFunc = () ->
       _p.setPlayHead o
     o.interval = setInterval playHeadFunc, TrackManager.intervalAmt
+  playBarWidth: (o) -> 
+    width = _m(o).playBar.width() #TODO dont rely on the dom to give you the width
+    return width
   setPlayHead: (o) ->
     mo = _m o
     duration = o.audio.duration
     currentTime = o.audio.currentTime 
-    width = mo.playBar.width() #TODO dont rely on the dom to give you the width
+    width = _p(o).playBarWidth() #_p.playBarWidth o
     pos = currentTime / duration * width
     mo.needle.css "left", "#{pos}px"
 
-
-
+  test: (o) -> return o
   append: (o) ->
-    _m(o).playBar.append _m(o).needle
-    $(document.body).append(_m(o).playBar).append _m(o).el
+    mo = _m(o)
+    mo.playBar.append mo.needle
+    mo.needle.dragsimple
+     yFilter: (y) -> 0
+     drag: (el) ->
+       o.audio.currentTime = $(el).position().left / _p.playBarWidth(o) * o.audio.duration
+    $(document.body).append(mo.playBar).append mo.el
+
     $(document).keydown (e) ->
       if o.playing == false
         console.log "not playing" 
@@ -100,7 +111,6 @@ TrackManager = _p.class
   removeTrack: (o, track) ->
     _p.remove o.tracks, track
     _p.render o
-  
 
 $(document).ready () ->
   trackManager = window.trackManager = _p.new TrackManager, audio: $('#song')
