@@ -12,6 +12,22 @@
     height: 30px;
     background-color: gray;
   }
+  .playBar {
+    background-color: #7777dd;
+    height: 20px;
+    margin-bottom: 15px;
+  }
+  .needle {
+    height: 20px;
+    width: 10px;
+    position: absolute;
+    background-color: black;
+  }
+  * {
+    margin: 0px;
+    padding: 0px;
+  }
+
 </style>  
 
 <script src="http://inc.the.tl/jquery.js"></script>
@@ -39,8 +55,10 @@ TrackManager = _p.class
   initialize: (o) ->
     el = _m(o).el = $ document.createElement "div"
     playBar = _m(o).playBar = $ document.createElement "div"
+    needle = _m(o).needle = $ document.createElement "div"
     el.addClass "tracks"
     playBar.addClass "playBar"
+    needle.addClass "needle"
     o.tracks = _p.new Arr, []
     o.$audio = $ o.audio
     o.audio = o.$audio[0] 
@@ -58,10 +76,17 @@ TrackManager = _p.class
       _p.setPlayHead o
     o.interval = setInterval playHeadFunc, TrackManager.intervalAmt
   setPlayHead: (o) ->
+    mo = _m o
     duration = o.audio.duration
     currentTime = o.audio.currentTime 
-    console.log currentTime
+    width = mo.playBar.width() #TODO dont rely on the dom to give you the width
+    pos = currentTime / duration * width
+    mo.needle.css "left", "#{pos}px"
+
+
+
   append: (o) ->
+    _m(o).playBar.append _m(o).needle
     $(document.body).append(_m(o).playBar).append _m(o).el
     $(document).keydown (e) ->
       if o.playing == false
