@@ -7,10 +7,13 @@
     height: 300px;
     overflow: scroll;
   }
-
   .track {
     height: 30px;
+    position: relative;
     background-color: gray;
+  }
+  .track-selected {
+    background-color: #cccccc; 
   }
   .playBar {
     background-color: #7777dd;
@@ -28,6 +31,12 @@
     margin: 0px;
     padding: 0px;
   }
+  .move {
+    background-color: orange;
+    top: 0;
+    height: 30px;
+    position: absolute;
+  }
 
 </style>  
 
@@ -37,24 +46,62 @@
 <script src="http://inc.the.tl/coffeescript.js"></script>
 <script src="http://inc.the.tl/neckbrace/index.js"></script>
 <script type="text/coffeescript">
-  
-TrackMaker = (trackManager) ->
-  Track = _p.class
-    initialize: (o) ->
-      el = _m(o).el = $ document.createElement "div"
-      el.addClass "track"
-      _p.append o    
-    append: (o) ->
-      _p.add trackManager.tracks, o
-      _m(trackManager).el.append _m(o).el
+
+Move = _p.class
+  initialize: (o) -> #must pass in the track it belogns to
+    console.log "go here!!"
+    el = _m(o).el = $ document.createElement "div"
+    el.addClass "move"
+    o.trackManager = o.track.trackManager
+    _p.append o
+  append: (o) ->
+    mo = _m(o)
+    console.log "trying to append"
+    el = _m(o).el
+    ratio =  _p(o.track).trackWidth() / o.trackManager.audio.duration 
+    el.css "left", "#{ratio * o.start}px"
+    console.log o.end, o.start, o.end - o.start
+    el.css "width", "#{ratio * (o.end - o.start)}px" 
+    _m(o.track).el.append el
+
+
+
+Track = _p.class
+  initialize: (o) ->
+    el = _m(o).el = $ document.createElement "div"
+    el.addClass "track"
+    moves = _p.new Arr, []
+    _p.append o    
+  append: (o) ->
+    mo = _m(o)
+    el = mo.el
+    _p.add o.trackManager.tracks, o
+    _m(o.trackManager).el.append el
+    _p.render o
+    el.append "<span class=\"name\">#{o.name}<\/span>"
+    el.bind "click", (e) ->
+      _p.set o.trackManager, "selected": o
+  render: (o) ->
+  trackWidth: (o) -> _m(o).el.width()
     
 _.mixin
   stringFromKeyCode: (keyCode) -> String.fromCharCode(keyCode).toLowerCase() 
 
 Arr = _p.__Arr
 
+keys =
+  space: 32
+  escape: 27
+  delete: 46
+  backspace: 8
+  
 TrackManager = _p.class
   intervalAmt: 1000
+  set: (o, vals) ->
+    _.extend o, vals
+    if "selected" of vals
+      $('.track-selected').removeClass "track-selected"
+      _m(vals.selected).el.addClass "track-selected"
   initialize: (o) ->
     el = _m(o).el = $ document.createElement "div"
     playBar = _m(o).playBar = $ document.createElement "div"
@@ -66,8 +113,6 @@ TrackManager = _p.class
     o.$audio = $ o.audio
     o.audio = o.$audio[0] 
     _p.append o
-    _m(o).Track = TrackMaker o
-    console.log o.$audio
     o.playing = false
     o.$audio.bind "canplaythrough", (e) ->
       console.log "can play through"
@@ -78,6 +123,7 @@ TrackManager = _p.class
     playHeadFunc = () ->
       _p.setPlayHead o
     o.interval = setInterval playHeadFunc, TrackManager.intervalAmt
+    
   playBarWidth: (o) -> 
     width = _m(o).playBar.width() #TODO dont rely on the dom to give you the width
     return width
@@ -99,13 +145,31 @@ TrackManager = _p.class
        o.audio.currentTime = $(el).position().left / _p.playBarWidth(o) * o.audio.duration
     $(document.body).append(mo.playBar).append mo.el
 
-    $(document).keydown (e) ->
-      if o.playing == false
+    $(document).bind "keydown", (e) ->
+      if o.playing == false  
         console.log "not playing" 
         return
-      console.log "playing is true"
       e.preventDefault()
-      console.log _.stringFromKeyCode e.keyCode     
+      if e.keyCode == o.lastKeyCode then return
+      o.lastKeyCode = e.keyCode
+      if e.keyCode == keys.space and o.selected
+        o.selected.start = o.audio.currentTime
+        console.log "down at #{o.selected.start}"
+    $(document).bind "keyup", (e) ->
+      if o.playing == false
+        console.log "not playing"
+        return
+      e.preventDefault()
+      if e.keyCode == keys.space and o.selected
+        o.selected.end = o.audio.currentTime
+        console.log "up at #{o.selected.end}"
+        o.lastKeyCode = false
+        move = _p.new Move, 
+          start: o.selected.start
+          end: o.selected.end
+          track: o.selected 
+    $('#zoom').bind "change", (e) ->
+      console.log $(this).val()
   render: (o) ->
     #todo: add this method
   removeTrack: (o, track) ->
@@ -114,15 +178,17 @@ TrackManager = _p.class
 
 $(document).ready () ->
   trackManager = window.trackManager = _p.new TrackManager, audio: $('#song')
-  track1 = _p.new _m(trackManager).Track
-  
-
-
+  #Track = _m(trackManager).Track
+  #track1 = _p.new Track, name: "a"
+  track1 = _p.new Track, name: "a", trackManager: trackManager
+  track2 = _p.new Track, name: "b", trackManager: trackManager
+  _p.new Track, name: "c", trackManager: trackManager
+  _p(trackManager).set "selected": trackManager.tracks[0]
 
 </script>
 </head>
 <body>
   <audio id="song" controls="true" src="Yo.mp3"></audio>
-
+  Zoom: <input type="range" min="100" max="2000" id="zoom">
 </body>
 </html>
